@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+uploads/
+*.h5
+.idea/
+.vscode/
+.DS_Store
+venv/
+*.h5
+*.db
+venv/
+*.h5
+*.db
+__pycache__/

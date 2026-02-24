@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SmartCalorie</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">🥗 SmartCalorie</div>
+            <div class="nav-menu">
+                <span id="userGreeting" class="user-greeting"></span>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="container">
+            <h1 class="dashboard-title">Your Nutrition Dashboard</h1>
+
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="detect">Detect Calories</button>
+                <button class="tab-btn" data-tab="bmi">BMI Calculator</button>
+                <button class="tab-btn" data-tab="analytics">Analytics</button>
+            </div>
+
+            <!-- Detect Tab -->
+            <div id="detectTab" class="tab-content active">
+                <div class="card">
+                    <h2>Calorie Detection</h2>
+                    
+                    <div class="upload-area" id="dashboardUploadArea">
+                        <div class="upload-icon">📸</div>
+                        <p>Click to upload or drag & drop</p>
+                        <p class="text-small">Food image (JPG, PNG)</p>
+                        <input type="file" id="dashboardImageInput" accept="image/*" hidden>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Food Weight (grams)</label>
+                        <input type="number" id="dashboardWeightInput" value="100" min="1" class="form-control">
+                    </div>
+
+                    <button id="dashboardDetectBtn" class="btn-primary btn-block">Detect & Log Calories</button>
+
+                    <div id="dashboardResultSection" class="result-section hidden">
+                        <h3>Detection Result</h3>
+                        <div class="result-card">
+                            <div class="result-item">
+                                <span class="result-label">Food Item:</span>
+                                <span class="result-value" id="dashboardFoodName">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Confidence:</span>
+                                <span class="result-value" id="dashboardConfidence">-</span>
+                            </div>
+                            <div class="result-item highlight">
+                                <span class="result-label">Calories:</span>
+                                <span class="result-value" id="dashboardCalories">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Weight:</span>
+                                <span class="result-value" id="dashboardWeight">-</span>
+                            </div>
+                        </div>
+                        <div class="success-message">✓ Entry logged to your tracking history</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BMI Tab -->
+            <div id="bmiTab" class="tab-content">
+                <div class="card">
+                    <h2>BMI Calculator</h2>
+                    <p class="text-muted">Track your Body Mass Index alongside your calorie intake</p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Height (cm)</label>
+                            <input type="number" id="heightInput" class="form-control" placeholder="175" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" id="bmiWeightInput" class="form-control" placeholder="70" step="0.1" required>
+                        </div>
+                    </div>
+
+                    <button id="calculateBmiBtn" class="btn-primary btn-block">Calculate BMI</button>
+
+                    <div id="bmiResultSection" class="result-section hidden">
+                        <h3>Your BMI Result</h3>
+                        <div class="bmi-display">
+                            <div class="bmi-value" id="bmiValue">0.0</div>
+                            <div class="bmi-category" id="bmiCategory">-</div>
+                        </div>
+                        <div class="bmi-chart">
+                            <div class="bmi-bar">
+                                <div class="bmi-range underweight">Underweight<br>&lt;18.5</div>
+                                <div class="bmi-range normal">Normal<br>18.5-24.9</div>
+                                <div class="bmi-range overweight">Overweight<br>25-29.9</div>
+                                <div class="bmi-range obese">Obese<br>≥30</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content">
+                <div class="analytics-controls">
+                    <button class="period-btn active" data-period="daily">Daily</button>
+                    <button class="period-btn" data-period="weekly">Weekly</button>
+                    <button class="period-btn" data-period="monthly">Monthly</button>
+                    <button class="period-btn" data-period="annual">Annual</button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🔥</div>
+                        <div class="stat-value" id="totalCalories">0</div>
+                        <div class="stat-label">Total Calories</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-value" id="avgCalories">0</div>
+                        <div class="stat-label">Avg per Entry</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-value" id="totalEntries">0</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⚖️</div>
+                        <div class="stat-value" id="latestBmi">-</div>
+                        <div class="stat-label">Latest BMI</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="card">
+                        <h3>Calorie Trend</h3>
+                        <canvas id="calorieChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Food Frequency</h3>
+                        <canvas id="foodChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Entries -->
+                <div class="card">
+                    <h3>Recent Entries</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Food Item</th>
+                                    <th>Weight (g)</th>
+                                    <th>Calories</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentEntriesTable">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No entries yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

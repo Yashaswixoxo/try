@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Calorie Tracker - AI-Powered Nutrition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">🥗 SmartCalorie</div>
+            <div class="nav-menu">
+                <button id="loginBtn" class="btn-secondary">Login</button>
+                <button id="signupBtn" class="btn-primary">Sign Up</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>AI-Powered Calorie Detection</h1>
+                <p class="hero-subtitle">Track your nutrition with advanced machine learning. Snap a photo, get instant calorie estimates.</p>
+            </div>
+        </section>
+
+        <!-- Quick Calorie Detection (No Login Required) -->
+        <section class="section">
+            <div class="container">
+                <div class="card">
+                    <h2>Quick Calorie Detection</h2>
+                    <p class="text-muted">No account needed - just upload and detect!</p>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📸</div>
+                        <p>Click to upload or drag & drop</p>
+                        <p class="text-small">Food image (JPG, PNG)</p>
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Food Weight (grams)</label>
+                        <input type="number" id="weightInput" value="100" min="1" class="form-control">
+                    </div>
+
+                    <button id="detectBtn" class="btn-primary btn-block">Detect Calories</button>
+
+                    <div id="resultSection" class="result-section hidden">
+                        <h3>Detection Result</h3>
+                        <div class="result-card">
+                            <div class="result-item">
+                                <span class="result-label">Food Item:</span>
+                                <span class="result-value" id="foodName">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Confidence:</span>
+                                <span class="result-value" id="confidence">-</span>
+                            </div>
+                            <div class="result-item highlight">
+                                <span class="result-label">Calories:</span>
+                                <span class="result-value" id="calories">-</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">Weight:</span>
+                                <span class="result-value" id="weight">-</span>
+                            </div>
+                        </div>
+                        <p class="text-muted text-center">Sign up to track your calories over time and access advanced analytics!</p>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI Detection</h3>
+                        <p>Advanced CNN model recognizes 40+ food items instantly</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Smart Analytics</h3>
+                        <p>Daily, weekly, monthly & annual tracking with visualizations</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚖️</div>
+                        <h3>BMI Calculator</h3>
+                        <p>Track your BMI trends alongside calorie intake</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-primary btn-block">Login</button>
+            </form>
+            <p class="text-center text-muted">Don't have an account? <a href="#" id="switchToSignup">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="signupUsername" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-primary btn-block">Create Account</button>
+            </form>
+            <p class="text-center text-muted">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+        </div>
+    </div>
+
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
