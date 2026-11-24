@@ -317,7 +317,7 @@ function updateRecentEntries(entries) {
     const tbody = document.getElementById('recentEntriesTable');
     
     if (!entries || entries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No entries yet</td></tr>';
+        tbody.innerHTML = '进步<td colspan="4" class="text-center text-muted">No entries yet</td></tr>';
         return;
     }
     
@@ -344,4 +344,50 @@ function showNotification(message, type = 'success') {
 // Load initial analytics when on analytics tab
 document.addEventListener('DOMContentLoaded', () => {
     loadAnalytics('daily');
+});
+
+//faq responsive
+
+function initFaqAccordion() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        // Remove existing event listener to avoid duplicates
+        question.removeEventListener('click', question.clickHandler);
+        
+        // Create handler function
+        const handler = () => {
+            // Close other FAQs
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item && otherItem.classList.contains('active')) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            
+            // Toggle current FAQ
+            item.classList.toggle('active');
+        };
+        
+        // Store handler to remove later if needed
+        question.clickHandler = handler;
+        
+        // Add event listener
+        question.addEventListener('click', handler);
+    });
+}
+
+// Initialize FAQ when about tab becomes active
+const aboutTabBtn = document.querySelector('.tab-btn[data-tab="about"]');
+if (aboutTabBtn) {
+    aboutTabBtn.addEventListener('click', () => {
+        setTimeout(initFaqAccordion, 100);
+    });
+}
+
+// Initialize on page load in case about tab is active  
+document.addEventListener('DOMContentLoaded', () => {
+    initFaqAccordion();
+     //Document Object Model to masnipulate dcuments acess html elements 
 });

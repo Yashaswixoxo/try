@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Membership Payment — NPR {{ amount }}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #8A9A7B 0%, #5F6F52 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .brand {
+    font-size: 14px;
+    color: #8A9A7B;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  h1 { font-size: 22px; color: #2C3E2A; text-align: center; margin-bottom: 8px; }
+  .amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2C3E2A;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .amount-sub { text-align: center; color: #6B7864; font-size: 13px; margin-bottom: 24px; }
+  .divider { border-top: 1px dashed #D4DDD0; margin: 20px 0; }
+  .label {
+    font-size: 12px;
+    color: #6B7864;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #D4DDD0;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .input:focus { border-color: #8A9A7B; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #8A9A7B 0%, #5F6F52 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.1s;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .note { text-align: center; font-size: 12px; color: #999; margin-top: 16px; }
+  .test-hint {
+    background: #E8EDE3;
+    border: 1px solid #B8C5A8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #5F6F52;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.97);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .overlay.active { display: flex; }
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #E8EDE3;
+    border-top-color: #8A9A7B;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status-text { margin-top: 20px; font-size: 15px; color: #2C3E2A; font-weight: 500; }
+  .status-sub { margin-top: 6px; font-size: 13px; color: #888; }
+  .error {
+    background: #FFE9E6;
+    color: #B87A6F;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+  }
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">SMART CALORIE TRACKER</div>
+  <h1>Membership Payment</h1>
+  <div class="amount">NPR {{ amount }}</div>
+  <div class="amount-sub">One-time payment • Lifetime access</div>
+
+  <div class="divider"></div>
+
+  <div class="test-hint">
+    💳 Test Mode — use card <b>4242 4242 4242 4242</b>
+  </div>
+
+  <div class="error" id="errorBox"></div>
+
+  <form id="payForm" onsubmit="return false;">
+    <label class="label">Card Number</label>
+    <input class="input" id="cardNum" maxlength="19" placeholder="4242 4242 4242 4242" 
+           value="4242 4242 4242 4242" required>
+
+    <div class="row">
+      <div>
+        <label class="label">Expiry</label>
+        <input class="input" id="expiry" maxlength="5" placeholder="MM/YY" value="12/28" required>
+      </div>
+      <div>
+        <label class="label">CVV</label>
+        <input class="input" id="cvv" maxlength="3" placeholder="123" value="123" 
+               type="password" required>
+      </div>
+    </div>
+
+    <label class="label">Name on Card</label>
+    <input class="input" id="cardName" placeholder="Full name" value="{{ username }}" required>
+
+    <button type="submit" class="btn" id="payBtn">Pay NPR {{ amount }}</button>
+  </form>
+
+  <p class="note">🔒 Demo mode — no real charge will be made</p>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="status-text" id="statusText">Contacting payment gateway…</div>
+  <div class="status-sub" id="statusSub">Please do not close this window</div>
+</div>
+
+<script>
+const TOKEN = "{{ token }}";
+
+document.getElementById('cardNum').addEventListener('input', (e) => {
+  let v = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+  e.target.value = v.match(/.{1,4}/g)?.join(' ') || v;
+});
+document.getElementById('expiry').addEventListener('input', (e) => {
+  let v = e.target.value.replace(/\D/g, '');
+  if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+  e.target.value = v;
+});
+
+const overlay = document.getElementById('overlay');
+const statusText = document.getElementById('statusText');
+const statusSub = document.getElementById('statusSub');
+const payBtn = document.getElementById('payBtn');
+const errorBox = document.getElementById('errorBox');
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.getElementById('payForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorBox.classList.remove('show');
+
+  const cardNum = document.getElementById('cardNum').value.replace(/\s/g,'');
+  const expiry = document.getElementById('expiry').value;
+  const cvv = document.getElementById('cvv').value;
+  const cardName = document.getElementById('cardName').value.trim();
+
+  if (cardNum.length < 15) return showError('Please enter a valid card number');
+  if (!/^\d{2}\/\d{2}$/.test(expiry)) return showError('Invalid expiry (MM/YY)');
+  if (cvv.length < 3) return showError('Invalid CVV');
+  if (cardName.length < 2) return showError('Please enter the cardholder name');
+
+  overlay.classList.add('active');
+  statusText.textContent = 'Contacting payment gateway…';
+  statusSub.textContent = 'Please do not close this window';
+  await sleep(1200);
+
+  statusText.textContent = 'Verifying transaction…';
+  statusSub.textContent = 'Securing your payment';
+  await sleep(800);
+
+  try {
+    const res = await fetch('/pay', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ token: TOKEN })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      statusText.textContent = '✅ Payment confirmed!';
+      statusSub.textContent = 'Redirecting to your receipt…';
+      await sleep(800);
+      window.location.href = data.redirect;
+    } else {
+      overlay.classList.remove('active');
+      showError(data.error || 'Payment failed');
+    }
+  } catch (err) {
+    overlay.classList.remove('active');
+    showError('Network error — please try again');
+  }
+});
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('show');
+  payBtn.disabled = false;
+}
+</script>
+
+</body>
+</html>

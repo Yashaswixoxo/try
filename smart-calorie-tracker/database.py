@@ -2,6 +2,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import json
+import secrets
 
 DATABASE = 'calorie_tracker.db'
 
@@ -50,6 +51,21 @@ def init_db():
             category TEXT NOT NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    # Pending signups (membership payment flow)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS pending_signups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token TEXT UNIQUE NOT NULL,
+            username TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            paid INTEGER DEFAULT 0,
+            txn_id TEXT,
+            paid_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
@@ -128,7 +144,6 @@ def get_user_data(user_id, period):
     elif period == 'annual':
         start_date = now - timedelta(days=365)
     
-    # Get calorie entries
     cursor.execute('''
         SELECT food_name, calories, weight, timestamp 
         FROM calorie_entries 
@@ -138,7 +153,6 @@ def get_user_data(user_id, period):
     
     entries = cursor.fetchall()
     
-    # Get BMI records
     cursor.execute('''
         SELECT height, weight, bmi, category, timestamp 
         FROM bmi_records 
@@ -150,11 +164,9 @@ def get_user_data(user_id, period):
     
     conn.close()
     
-    # Process data for analytics
     total_calories = sum([entry['calories'] for entry in entries])
     avg_calories = total_calories / len(entries) if entries else 0
     
-    # Group by date for charts
     daily_data = {}
     for entry in entries:
         date = entry['timestamp'].split()[0]
@@ -162,7 +174,6 @@ def get_user_data(user_id, period):
             daily_data[date] = 0
         daily_data[date] += entry['calories']
     
-    # Food frequency
     food_counts = {}
     for entry in entries:
         food = entry['food_name']
@@ -179,3 +190,100 @@ def get_user_data(user_id, period):
         'bmi_records': [dict(record) for record in bmi_records],
         'latest_bmi': dict(bmi_records[0]) if bmi_records else None
     }
+
+
+# ============================================================
+# SIMULATED MEMBERSHIP PAYMENT SYSTEM
+# ============================================================
+
+def create_pending_signup(username, email, password):
+    """Save a pending signup (NOT a real user yet). Returns (success, message, token)."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if cursor.fetchone():
+            conn.close()
+            return False, "Email already registered", None
+
+        cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+        if cursor.fetchone():
+            conn.close()
+            return False, "Username already taken", None
+
+        token = secrets.token_urlsafe(24)
+        password_hash = generate_password_hash(password)
+
+        cursor.execute('DELETE FROM pending_signups WHERE email = ?', (email,))
+        cursor.execute(
+            '''INSERT INTO pending_signups 
+               (token, username, email, password_hash) 
+               VALUES (?, ?, ?, ?)''',
+            (token, username, email, password_hash)
+        )
+        conn.commit()
+        conn.close()
+        return True, "Pending signup created", token
+    except Exception as e:
+        return False, str(e), None
+
+
+def get_pending_signup(token):
+    """Fetch a pending signup by token."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM pending_signups WHERE token = ?', (token,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def complete_pending_signup(token, txn_id):
+    """Move pending -> real user with a paid record. Returns (success, message)."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT * FROM pending_signups WHERE token = ?', (token,))
+        pending = cursor.fetchone()
+        if not pending:
+            conn.close()
+            return False, "Invalid payment token"
+
+        if pending['paid'] == 1:
+            conn.close()
+            return False, "Payment already processed"
+
+        cursor.execute(
+            '''INSERT INTO users (username, email, password_hash) 
+               VALUES (?, ?, ?)''',
+            (pending['username'], pending['email'], pending['password_hash'])
+        )
+
+        cursor.execute(
+            '''UPDATE pending_signups 
+               SET paid = 1, txn_id = ?, paid_at = CURRENT_TIMESTAMP 
+               WHERE token = ?''',
+            (txn_id, token)
+        )
+        conn.commit()
+        conn.close()
+        return True, "Membership activated"
+    except sqlite3.IntegrityError as e:
+        return False, f"Account creation failed: {e}"
+    except Exception as e:
+        return False, str(e)
+
+
+def user_has_paid(email):
+    """Check if user's email has a completed payment record."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT 1 FROM pending_signups WHERE email = ? AND paid = 1 LIMIT 1',
+        (email,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row is not None

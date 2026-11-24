@@ -65,10 +65,16 @@ signupForm.addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (response.ok) {
-            showNotification('Account created successfully! Please login.', 'success');
-            signupModal.classList.add('hidden');
+            showNotification('Account created! Redirecting to payment...', 'success');
             signupForm.reset();
-            loginModal.classList.remove('hidden');
+            signupModal.classList.add('hidden');
+            if (data.redirect) {
+                setTimeout(() => {
+                    window.location.href = data.redirect;
+                }, 800);
+            } else {
+                loginModal.classList.remove('hidden');
+            }
         } else {
             showNotification(data.error || 'Signup failed', 'error');
         }
@@ -99,10 +105,11 @@ loginForm.addEventListener('submit', async (e) => {
             showNotification('Login successful!', 'success');
             loginModal.classList.add('hidden');
             loginForm.reset();
-            // Redirect to dashboard
             setTimeout(() => {
                 window.location.href = '/dashboard';
             }, 1000);
+        } else if (response.status === 402) {
+            showNotification(data.error || 'Membership payment required', 'error');
         } else {
             showNotification(data.error || 'Login failed', 'error');
         }
@@ -121,7 +128,7 @@ uploadArea.addEventListener('dragover', (e) => {
     uploadArea.style.borderColor = '#8A9A7B';
 });
 
-uploadArea.addEventListener('dragleave', () => {
+uploadArea.addEventListener('dragleave', (e) => {
     uploadArea.style.borderColor = '#B8C5A8';
 });
 
